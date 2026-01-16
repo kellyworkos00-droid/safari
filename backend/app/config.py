@@ -1,5 +1,10 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pathlib import Path
+
+# Get the backend directory
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -28,7 +33,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     
     class Config:
-        env_file = ".env"
+        env_file = str(ENV_FILE)
         case_sensitive = True
 
 

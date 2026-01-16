@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.booking import Booking, BookingStatus, PaymentStatus
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 import uuid
 
 router = APIRouter()
