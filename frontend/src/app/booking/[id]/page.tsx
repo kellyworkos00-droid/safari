@@ -3,15 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { toursService } from '@/lib/tours';
-
-interface Tour {
-  id: number;
-  title: string;
-  location: string;
-  duration_days: number;
-  price_per_person: number;
-}
+import { tourService } from '@/lib/tours';
+import { bookingService } from '@/lib/bookings';
+import { Tour } from '@/types/tour';
 
 export default function BookingPage() {
   const params = useParams();
@@ -37,7 +31,7 @@ export default function BookingPage() {
   const fetchTourDetails = async () => {
     try {
       setLoading(true);
-      const data = await toursService.getTour(Number(params.id));
+      const data = await tourService.getTour(Number(params.id));
       setTour(data);
     } catch (error) {
       console.error('Failed to fetch tour:', error);
@@ -59,12 +53,17 @@ export default function BookingPage() {
     setSubmitting(true);
 
     try {
-      // TODO: Create booking via API
-      // const booking = await bookingsService.createBooking(params.id, bookingData);
-      // router.push(`/payment/${booking.id}`);
+      const booking = await bookingService.createBooking({
+        tour_id: Number(params.id),
+        number_of_people: bookingData.number_of_people,
+        customer_name: bookingData.full_name,
+        customer_email: bookingData.email,
+        customer_phone: bookingData.phone,
+        special_requests: bookingData.special_requests
+      });
       
-      // For now, redirect to payment page
-      router.push(`/payment/${params.id}?people=${bookingData.number_of_people}`);
+      // Redirect to payment page with booking ID
+      router.push(`/payment/${booking.id}`);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create booking. Please try again.');
     } finally {
@@ -237,7 +236,7 @@ export default function BookingPage() {
               <div className="space-y-4 mb-6">
                 <div>
                   <h3 className="font-bold text-gray-900">{tour.title}</h3>
-                  <p className="text-sm text-gray-600">{tour.location}</p>
+                  <p className="text-sm text-gray-600">{tour.destination}</p>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-600">

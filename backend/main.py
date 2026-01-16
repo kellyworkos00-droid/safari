@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routes import auth, tours, bookings, reviews
+from app.routes import auth, tours, bookings, reviews, payments
 
 settings = get_settings()
 
@@ -40,6 +40,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(tours.router, prefix="/api/tours", tags=["Tours"])
 app.include_router(bookings.router, prefix="/api/bookings", tags=["Bookings"])
 app.include_router(reviews.router, prefix="/api/reviews", tags=["Reviews"])
+app.include_router(payments.router, prefix="/api", tags=["Payments"])
 
 
 if __name__ == "__main__":

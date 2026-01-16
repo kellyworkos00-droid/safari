@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { bookingService } from '@/lib/bookings';
+import { paymentService } from '@/lib/payments';
 
 export default function PaymentPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [booking, setBooking] = useState<any>(null);
   const [error, setError] = useState('');
   const [step, setStep] = useState<'details' | 'processing' | 'success'>('details');
   
@@ -17,7 +19,22 @@ export default function PaymentPage() {
     payment_method: 'mpesa'
   });
 
-  const totalAmount = Number(searchParams.get('amount')) || 0;
+  useEffect(() => {
+    fetchBookingDetails();
+  }, [params.id]);
+
+  const fetchBookingDetails = async () => {
+    try {
+      setLoading(true);
+      const data = await bookingService.getBooking(Number(params.id));
+      setBooking(data);
+    } catch (error) {
+      console.error('Failed to fetch booking:', error);
+      setError('Failed to load booking details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPaymentData(prev => ({
@@ -28,19 +45,21 @@ export default function PaymentPage() {
 
   const handleMpesaPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!booking) return;
+    
     setError('');
     setLoading(true);
     setStep('processing');
 
     try {
-      // TODO: Integrate with M-PESA Daraja API
-      // const response = await paymentService.initiateMpesa({
-      //   booking_id: params.id,
-      //   phone_number: paymentData.phone_number,
-      //   amount: totalAmount
-      // });
+      const response = await paymentService.initiatePayment({
+        booking_id: Number(params.id),
+        phone_number: paymentData.phone_number,
+        amount: booking.total_amount,
+        payment_method: 'mpesa'
+      });
 
-      // Simulate M-PESA STK push
+      // Simulate STK push waiting time
       setTimeout(() => {
         setStep('success');
       }, 3000);
@@ -52,6 +71,32 @@ export default function PaymentPage() {
       setLoading(false);
     }
   };
+
+  if (loading && !booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking not found</h2>
+          <Link href="/tours" className="text-green-600 hover:text-green-700">
+            Back to tours
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const totalAmount = booking.total_amount;
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -3,22 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { toursService } from '@/lib/tours';
-
-interface Tour {
-  id: number;
-  title: string;
-  description: string;
-  location: string;
-  duration_days: number;
-  price_per_person: number;
-  max_group_size: number;
-  category: string;
-  difficulty_level: string;
-  included_items?: string[];
-  excluded_items?: string[];
-  itinerary?: string;
-}
+import { tourService } from '@/lib/tours';
+import { Tour } from '@/types/tour';
 
 export default function TourDetailPage() {
   const params = useParams();
@@ -34,7 +20,7 @@ export default function TourDetailPage() {
   const fetchTourDetails = async () => {
     try {
       setLoading(true);
-      const data = await toursService.getTour(Number(params.id));
+      const data = await tourService.getTour(Number(params.id));
       setTour(data);
     } catch (error) {
       console.error('Failed to fetch tour:', error);
@@ -122,13 +108,7 @@ export default function TourDetailPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  Max {tour.max_group_size} People
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {tour.difficulty_level}
+                  {tour.min_participants}-{tour.max_participants || '∞'} People
                 </div>
               </div>
 
@@ -137,35 +117,17 @@ export default function TourDetailPage() {
                 <p className="text-gray-600 leading-relaxed">{tour.description}</p>
               </div>
 
-              {tour.included_items && tour.included_items.length > 0 && (
+              {tour.includes && (
                 <div className="mt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">What's Included</h3>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {tour.included_items.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-gray-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="text-gray-700 whitespace-pre-line">{tour.includes}</div>
                 </div>
               )}
 
-              {tour.excluded_items && tour.excluded_items.length > 0 && (
+              {tour.excludes && (
                 <div className="mt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">What's Not Included</h3>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {tour.excluded_items.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span className="text-gray-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="text-gray-700 whitespace-pre-line">{tour.excludes}</div>
                 </div>
               )}
             </div>
@@ -191,13 +153,13 @@ export default function TourDetailPage() {
                   <input
                     type="number"
                     value={numberOfPeople}
-                    onChange={(e) => setNumberOfPeople(Math.max(1, Math.min(tour.max_group_size, Number(e.target.value))))}
+                    onChange={(e) => setNumberOfPeople(Math.max(1, Math.min(tour.max_participants || 100, Number(e.target.value))))}
                     className="flex-1 text-center text-xl font-bold py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                     min="1"
-                    max={tour.max_group_size}
+                    max={tour.max_participants || 100}
                   />
                   <button
-                    onClick={() => setNumberOfPeople(Math.min(tour.max_group_size, numberOfPeople + 1))}
+                    onClick={() => setNumberOfPeople(Math.min(tour.max_participants || 100, numberOfPeople + 1))}
                     className="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-green-600 hover:text-green-600 font-bold transition"
                   >
                     +

@@ -29,8 +29,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await authService.login(formData);
-      router.push('/dashboard');
+      const response = await authService.login(formData);
+      const userRole = response.user.role;
+      
+      // Redirect to role-specific dashboard
+      router.push(`/dashboard/${userRole}`);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Invalid email or password');
     } finally {

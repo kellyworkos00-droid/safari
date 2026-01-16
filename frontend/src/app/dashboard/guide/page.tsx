@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authService } from '@/lib/auth';
+import { tourService } from '@/lib/tours';
 
 interface Tour {
   id: number;
@@ -27,8 +29,8 @@ export default function GuideDashboard() {
     }, 1000);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    await authService.logout();
     router.push('/');
   };
 

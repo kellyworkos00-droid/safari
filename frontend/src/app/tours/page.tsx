@@ -2,30 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { toursService } from '@/lib/tours';
-
-interface Tour {
-  id: number;
-  title: string;
-  description: string;
-  location: string;
-  duration_days: number;
-  price_per_person: number;
-  max_group_size: number;
-  category: string;
-  difficulty_level: string;
-  images?: string[];
-}
+import { tourService } from '@/lib/tours';
+import { Tour, TourCategory } from '@/types/tour';
 
 export default function ToursPage() {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: '',
-    location: '',
-    minPrice: '',
-    maxPrice: '',
-    difficulty: ''
+    destination: '',
+    min_price: '',
+    max_price: ''
   });
 
   useEffect(() => {
@@ -35,7 +22,13 @@ export default function ToursPage() {
   const fetchTours = async () => {
     try {
       setLoading(true);
-      const data = await toursService.getTours(filters);
+      const filterParams: any = {};
+      if (filters.category) filterParams.category = filters.category;
+      if (filters.destination) filterParams.destination = filters.destination;
+      if (filters.min_price) filterParams.min_price = Number(filters.min_price);
+      if (filters.max_price) filterParams.max_price = Number(filters.max_price);
+      
+      const data = await tourService.getTours(filterParams);
       setTours(data);
     } catch (error) {
       console.error('Failed to fetch tours:', error);
@@ -55,8 +48,16 @@ export default function ToursPage() {
     fetchTours();
   };
 
-  const categories = ['Safari', 'Beach', 'Mountain', 'Cultural', 'Adventure', 'Wildlife'];
-  const difficulties = ['Easy', 'Moderate', 'Challenging', 'Expert'];
+  const categories = [
+    { label: 'Wildlife', value: 'wildlife' },
+    { label: 'Beach', value: 'beach' },
+    { label: 'Mountain', value: 'mountain' },
+    { label: 'Cultural', value: 'cultural' },
+    { label: 'Adventure', value: 'adventure' },
+    { label: 'Wellness', value: 'wellness' },
+    { label: 'City', value: 'city' },
+    { label: 'Road Trip', value: 'road_trip' }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,7 +91,7 @@ export default function ToursPage() {
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Filter Tours</h2>
-          <div className="grid md:grid-cols-5 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <select
@@ -101,17 +102,17 @@ export default function ToursPage() {
               >
                 <option value="">All Categories</option>
                 {categories.map(cat => (
-                  <option key={cat} value={cat.toLowerCase()}>{cat}</option>
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Destination</label>
               <input
                 type="text"
-                name="location"
-                value={filters.location}
+                name="destination"
+                value={filters.destination}
                 onChange={handleFilterChange}
                 placeholder="e.g. Maasai Mara"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -122,8 +123,8 @@ export default function ToursPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Min Price ($)</label>
               <input
                 type="number"
-                name="minPrice"
-                value={filters.minPrice}
+                name="min_price"
+                value={filters.min_price}
                 onChange={handleFilterChange}
                 placeholder="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -134,27 +135,12 @@ export default function ToursPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Price ($)</label>
               <input
                 type="number"
-                name="maxPrice"
-                value={filters.maxPrice}
+                name="max_price"
+                value={filters.max_price}
                 onChange={handleFilterChange}
                 placeholder="10000"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-              <select
-                name="difficulty"
-                value={filters.difficulty}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-              >
-                <option value="">All Levels</option>
-                {difficulties.map(diff => (
-                  <option key={diff} value={diff.toLowerCase()}>{diff}</option>
-                ))}
-              </select>
             </div>
           </div>
           <div className="mt-4 flex justify-end">
@@ -217,7 +203,7 @@ export default function ToursPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      {tour.location}
+                      {tour.destination}
                     </div>
                     <div className="flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,7 +217,7 @@ export default function ToursPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      Max {tour.max_group_size}
+                      {tour.min_participants}-{tour.max_participants || '∞'} people
                     </div>
                     <span className="text-green-600 font-semibold text-sm">View Details →</span>
                   </div>

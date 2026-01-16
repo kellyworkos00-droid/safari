@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authService } from '@/lib/auth';
 
 interface Guide {
   id: number;
@@ -26,8 +27,8 @@ export default function CompanyDashboard() {
     }, 1000);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    await authService.logout();
     router.push('/');
   };
 

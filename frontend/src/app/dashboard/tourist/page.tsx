@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authService } from '@/lib/auth';
+import { bookingService } from '@/lib/bookings';
 
 interface Booking {
   id: number;
@@ -23,15 +25,28 @@ export default function TouristDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch user data and bookings from API
-    setTimeout(() => {
-      setBookings([]);
-      setLoading(false);
-    }, 1000);
+    fetchDashboardData();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        setUser({ name: currentUser.full_name, email: currentUser.email });
+      }
+      
+      const bookingsData = await bookingService.getBookings();
+      setBookings(bookingsData);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
     router.push('/');
   };
 
